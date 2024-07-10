@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Tracer</title>
+    
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        /* Importing Roboto font from Google Fonts */
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            /* Use Roboto font */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url("C://Users//hp//Downloads//night_sky.jpg");
+            /* Background image */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            /* Semi-transparent white background for better readability */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            /* Ensure the container is in front of other elements */
+            position: relative;
+            /* Make sure z-index works */
+        }
+
+        h1 {
+            color: #333333;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        #options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            /* Add gap between buttons */
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #345e36;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .constellation-image {
+            max-width: 100%;
+            margin-top: 20px;
+            display: none;
+            /* hide the image initially*/
+        }
+
+        #options button {
+            background-color: #4CAF50;
+            /* Green background color */
+            color: white;
+            /* White text color */
+            padding: 15px 25px;
+            /* Padding around the text */
+            border: 2px solid #4CAF50;
+            /* Green border */
+            border-radius: 5px;
+            /* Rounded corners */
+            cursor: pointer;
+            /* Add cursor pointer on hover */
+        }
+
+        #options button:hover {
+            background-color: #45a049;
+            /* Darker green background color on hover */
+            border-color: #45a049;
+            /* Darker green border color on hover */
+        }
+        #randomConstellationButton {
+            background-color: #4CAF50; /* Green background color */
+            color: white; /* White text color */
+            padding: 15px 25px; /* Padding around the text */
+            border: 2px solid #4CAF50; /* Green border */
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer; /* Add cursor pointer on hover */
+            margin-bottom: 10px; /* Add space between buttons */
+        }
+        
+        #randomConstellationButton:hover {
+            background-color: #45a049; /* Darker green background color on hover */
+            border-color: #45a049; /* Darker green border color on hover */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Cosmic Tracer</h1>
+        <div id="options">
+            <button id="searchConstellationButton">Search for Constellation</button>
+            <button id="traceImageButton">Trace Image</button>
+            <button id="randomConstellationButton">Random Constellation</button>
+        </div>
+        <div id="searchConstellationSection" style="display: none;">
+            <!-- Search bar for searching constellations -->
+            <input type="text" id="constellationSearchInput" placeholder="Enter constellation name">
+            <button id="searchButton">Search</button>
+        </div>
+        <div id="uploadSection" style="display: none;">
+            <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+                <input type="file" name="image" accept=".jpg, .jpeg, .png">
+                <button type="submit">Trace</button>
+            </form>
+        </div>
+        <div id ="randomConstellationSection"
+        <div class="result"></div>
+        <img class="constellation-image" src="" alt="Constellation Image">
+    </div>
+
+    <script>
+
+
+        function showOptionsSection() {
+            document.getElementById('options').style.display = 'flex';
+            document.getElementById('searchConstellationSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+        }
+        // Function to handle transition to search constellation functionality
+        document.getElementById('searchConstellationButton').addEventListener('click', function () {
+            document.getElementById('options').style.display = 'none';
+            document.getElementById('searchConstellationSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+        });
+
+        // Function to handle transition to trace image functionality
+        document.getElementById('traceImageButton').addEventListener('click', function () {
+            document.getElementById('options').style.display = 'none';
+            document.getElementById('searchConstellationSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
+        });
+
+        document.getElementById('randomConstellationButton').addEventListener('click', function () {
+            // Send AJAX request to backend to get random constellation info
+            fetch('http://127.0.0.1:5000/random-constellation', {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => displayRandomConstellation(data))
+                .catch(error => console.error('Error:', error));
+        });
+        
+
+        // Function to handle form submission for searching constellation
+        document.getElementById('searchButton').addEventListener('click', function () {
+            var constellationName = document.getElementById('constellationSearchInput').value.trim();
+            if (constellationName) {
+                // Send AJAX request to backend to search for constellation by name
+                fetch('http://127.0.0.1:5000/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ constellation_name: constellationName })
+                })
+                    .then(response => response.json())
+                    .then(data => displayConstellationInfo(data))
+                    .catch(error => console.error('Error:', error));
+            }
+        });
+        // Function to display constellation information
+        function displayConstellationInfo(data) {
+            var resultDiv = document.querySelector('.result');
+            if (data.error) {
+                resultDiv.textContent = data.error;
+                resultDiv.className = 'result error';
+
+                return;
+            }
+
+            var constellationName = data.name;
+            var constellationDescription = data.description;
+            var constellationImageURL = data.image_url;
+
+            var resultMessage = `Constellation: ${constellationName}\nDescription: ${constellationDescription}`;
+            resultDiv.textContent = resultMessage;
+            resultDiv.className = 'result success';
+
+            // Display the constellation image
+            var constellationImage = document.querySelector('.constellation-image');
+            constellationImage.src = constellationImageURL;
+            constellationImage.alt = constellationName;
+            constellationImage.style.display = 'block';
+            showOptionsSection()
+        }
+
+        // Function to display result message
+        function displayResult(response) {
+            var resultDiv = document.querySelector('.result');
+            var resultMessage = response.result;
+            var resultType = response.type;
+
+            // Update result message with appropriate styling
+            resultDiv.textContent = resultMessage;
+            resultDiv.className = 'result ' + resultType;
+
+            // Check if constellation name and image data are present in the response
+            if (response.constellation && response.image_data) {
+                // Display the uploaded image with the name of the constellation
+                var constellationImage = document.querySelector('.constellation-image');
+                constellationImage.src = 'data:image/jpeg;base64,' + response.image_data;
+                constellationImage.alt = response.constellation;
+                constellationImage.style.display = 'block';
+            }
+            showOptionsSection()
+        }
+
+        function displayRandomConstellation(data) {
+            var resultDiv = document.querySelector('.result');
+            var constellationName = data.name;
+            var constellationDescription = data.description;
+            var constellationImageURL = data.image_url;
+        
+            var resultMessage = `Random Constellation: ${constellationName}\nDescription: ${constellationDescription}`;
+            resultDiv.textContent = resultMessage;
+            resultDiv.className = 'result success';
+        
+            // Display the constellation image
+            var constellationImage = document.querySelector('.constellation-image');
+            constellationImage.src = constellationImageURL;
+            constellationImage.alt = constellationName;
+            constellationImage.style.display = 'block';
+            showOptionsSection();
+        }
+        
+
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            var formData = new FormData(this);
+
+            // Send image data using Fetch API
+            fetch('http://127.0.0.1:5000/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => displayResult(data))
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+
+</html>
